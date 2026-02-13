@@ -1,0 +1,15 @@
+{
+  "name": "2x-db",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "2X Supabase client and sync daemon",
+  "bin": {
+    "2x-db": "./client.js"
+  },
+  "scripts": {
+    "sync": "node sync.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2"
+  }
+}

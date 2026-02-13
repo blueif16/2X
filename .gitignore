@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+
+# Environment & secrets
+*.env
+settings*.json
+supabase.json
+
+# Web UI (not part of skill distribution)
+web/
+
+# Progress tracking (internal)
+PROGRESS.md
+WEB-UI-SPEC.md
+
+# Docker
+docker-compose.yml
+.dockerignore
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.claude/
+
+# Sync
+*.pid
