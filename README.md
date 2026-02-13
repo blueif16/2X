@@ -27,19 +27,20 @@ Every user also gets their own independent portal to monitor their data. On our 
 One last thing. I think the core message of this README is: if you have nothing to say, then maybe just say nothing. But if you have any independently formed thought at all — saying it out loud is always better than not. And in that process, I hope 2X can help.
 
 PS: All the rest of the content is written by AI
+
 ---
 
 ## What this actually is
 
 You do interesting work every day — committing code, reading papers, solving problems, having ideas in the shower. Most of it evaporates. Some of it deserves to exist outside your head.
 
-2X is a writing partner that lives in [OpenClaw](https://openclaw.com). Twice a day (or whenever you want), it looks at what you've been up to, starts a conversation with you about it, and helps you shape your thinking into something worth posting. Then it handles the mechanical part — formatting for each platform, clicking buttons, posting.
+2X is a writing partner that lives in [OpenClaw](https://2x.infinityopus.com). Twice a day (or whenever you want), it looks at what you've been up to, starts a conversation with you about it, and helps you shape your thinking into something worth posting. Then it handles the mechanical part — formatting for each platform, clicking buttons, posting.
 
 That's it. It's not an autopilot. It doesn't post without you. It doesn't engage on your behalf. It doesn't optimize for reach. It's a 5-minute conversation that helps you think out loud, and then distributes the result.
 
 ## How a typical session works
 
-You say `2x now` (or it pings you at noon).
+Cron fires (or you say `2x now`). The collector silently gathers your intelligence traces — GitHub commits, browser history, chat sessions. Then it pings you.
 
 ```
 Agent: Here's what I picked up:
@@ -90,6 +91,13 @@ Agent: ✅ Posted to X: https://x.com/you/status/123
 ```
 
 The conversation IS the product. The 3 minutes where you figured out what mattered about your work — that's the value. The posts are just distribution.
+
+<details>
+<summary>See the full flow in action</summary>
+
+https://github.com/user-attachments/assets/demo-video.mp4
+
+</details>
 
 ---
 
@@ -194,8 +202,8 @@ That's the full list. Your GitHub events, your browsing history, the conversatio
 
 Nothing crosses the privacy boundary until you've had a conversation about it. The flow is:
 
-1. Collector grabs raw data → **stays local**
-2. You and the agent talk about what's interesting → **stays local**
+1. Cron triggers collector → grabs your intelligence traces → **stays local**
+2. Agent pings you with a summary, you talk about what's interesting → **stays local**
 3. Agent generates drafts → written to local files first
 4. You edit, iterate, say "looks good" → **only now** does the sync daemon push to Supabase
 5. You say "post it" → browser automation posts to the platform
@@ -207,6 +215,8 @@ Step 4 is the consent moment. Before that, Supabase doesn't know you exist today
 Fair question. If everything important stays local, why bother with Supabase?
 
 Honestly — just for a better UI. Editing markdown files in a terminal or telegram works, but it's not great. Having your drafts in Supabase means we can build a clean web editor where you tweak your X post and LinkedIn draft side by side, see your edit history, and preview how things will look before posting. It also means you can check in on your posted content and engagement numbers from any browser without SSH-ing into your machine.
+
+![Session drafts view](assets/session-drafts-view.png)
 
 That's it. The cloud is a convenience layer for editing and viewing. The brain — collection, conversation, decision-making — stays on your machine. If Supabase went down tomorrow, you'd still have every draft and every post as local files. The cloud makes the experience nicer. It's not the source of truth.
 
@@ -238,7 +248,9 @@ First time you say `2x`, the setup wizard walks you through everything:
 6. Auth with Supabase via GitHub OAuth
 7. Dry run to verify everything connects
 
-Takes about 2 minutes. After that, it's just `2x now` or wait for the cron ping.
+![Supabase Auth Verified](assets/supabase-auth-verified.png)
+
+After that, it's just `2x now` or wait for the cron ping.
 
 ---
 
@@ -254,7 +266,8 @@ Takes about 2 minutes. After that, it's just `2x now` or wait for the cron ping.
 
 ---
 
-## How the pieces connect (for the curious)
+<details>
+<summary>How the pieces connect (for the curious)</summary>
 
 ### Orchestrator (`SKILL.md`)
 
@@ -291,9 +304,10 @@ Background process. Watches local draft files with `fs.watch`, pushes changes to
 
 Five commands: `auth login`, `auth status`, `create-session`, `publish-draft`, `update-session`. Handles the structural Supabase operations that the sync daemon doesn't cover. All output is JSON for easy parsing by the agent.
 
----
+</details>
 
-## File map
+<details>
+<summary>File map</summary>
 
 | File | Where | What it knows |
 |---|---|---|
@@ -311,6 +325,8 @@ Five commands: `auth login`, `auth status`, `create-session`, `publish-draft`, `
 
 The arrow in "Local → Cloud" is the privacy boundary. Everything above it stays on your machine. Everything at or below it is content you explicitly approved.
 
+</details>
+
 ---
 
 ## Current status
@@ -324,4 +340,4 @@ The arrow in "Local → Cloud" is the privacy boundary. Everything above it stay
 
 ## License
 
-Part of the [OpenClaw](https://openclaw.com) ecosystem.
+Part of the [OpenClaw](https://2x.infinityopus.com) ecosystem.

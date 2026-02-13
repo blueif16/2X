@@ -119,34 +119,92 @@ async function authLogin(provider = 'github') {
 
   const { client } = getClient();
   const port = 54321;
-  const redirectUrl = `http://localhost:${port}/callback`;
+  const redirectUrl = `http://127.0.0.1:${port}/callback`;
 
   // Start a temporary local server to catch the OAuth redirect
   return new Promise((resolve) => {
     const server = createServer(async (req, res) => {
-      const url = new URL(req.url, `http://localhost:${port}`);
+      const url = new URL(req.url, `http://127.0.0.1:${port}`);
 
       if (url.pathname === '/callback') {
-        // Supabase redirects with tokens in the hash, but for server-side
-        // we need to extract from query params. Serve a page that extracts hash params.
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(`
-          <html><body>
+          <html><head>
+          <meta charset="utf-8">
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+          <style>
+            *{box-sizing:border-box;margin:0;padding:0}
+            body{font-family:'Inter',system-ui,sans-serif;background:#09090b;color:#fafafa;font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center}
+            .wrap{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+            .brand{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;letter-spacing:-1px}
+            .sub{color:#71717a;font-size:13px;margin-bottom:24px}
+            .status{color:#a1a1aa;font-size:14px}
+            .ok{color:#4ade80}
+            .err{color:#ef4444}
+            pre{font-family:'JetBrains Mono',monospace;font-size:12px;color:#71717a;margin-top:8px}
+          </style>
+          </head><body>
+          <div class="wrap">
+            <div class="brand">2X</div>
+            <div class="sub">多平台内容编辑器</div>
+            <div id="msg" class="status">认证中...</div>
+          </div>
           <script>
+            const msg = document.getElementById('msg');
             const hash = window.location.hash.substring(1);
             const params = new URLSearchParams(hash);
             const access_token = params.get('access_token');
             const refresh_token = params.get('refresh_token');
             if (access_token) {
               fetch('/save-tokens?access_token=' + access_token + '&refresh_token=' + refresh_token)
-                .then(() => { document.body.innerHTML = '<h2>✅ Authenticated! You can close this tab.</h2>'; });
+                .then(() => { msg.className = 'status ok'; msg.textContent = '认证成功，可以关闭此页面'; })
+                .catch(e => { msg.className = 'status err'; msg.innerHTML = '认证失败<pre>' + e.message + '</pre>'; });
             } else {
-              document.body.innerHTML = '<h2>❌ No tokens found. Try again.</h2>';
+              const searchParams = new URLSearchParams(window.location.search);
+              const code = searchParams.get('code');
+              if (code) {
+                fetch('/save-code?code=' + code)
+                  .then(() => { msg.className = 'status ok'; msg.textContent = '认证成功，可以关闭此页面'; })
+                  .catch(e => { msg.className = 'status err'; msg.innerHTML = '认证失败<pre>' + e.message + '</pre>'; });
+              } else {
+                msg.className = 'status err'; msg.textContent = '未获取到令牌，请重试';
+              }
             }
           </script>
-          <h2>Authenticating...</h2>
           </body></html>
         `);
+      } else if (url.pathname === '/save-code') {
+        const code = url.searchParams.get('code');
+        try {
+          const { data: session, error: codeErr } = await client.auth.exchangeCodeForSession(code);
+          if (codeErr || !session?.session) {
+            res.writeHead(500);
+            res.end('Code exchange failed');
+            server.close();
+            console.error(JSON.stringify({ error: `Code exchange failed: ${codeErr?.message}` }));
+            resolve();
+            return;
+          }
+          saveAuth({
+            access_token: session.session.access_token,
+            refresh_token: session.session.refresh_token,
+            user_id: session.session.user.id,
+            email: session.session.user.email,
+            provider: provider,
+            expires_at: session.session.expires_at,
+          });
+          res.writeHead(200);
+          res.end('ok');
+          server.close();
+          console.log(JSON.stringify({ ok: true, user_id: session.session.user.id, email: session.session.user.email, provider }));
+          resolve();
+        } catch (e) {
+          res.writeHead(500);
+          res.end('Code exchange error');
+          server.close();
+          console.error(JSON.stringify({ error: `Code exchange exception: ${e.message}` }));
+          resolve();
+        }
       } else if (url.pathname === '/save-tokens') {
         const access_token = url.searchParams.get('access_token');
         const refresh_token = url.searchParams.get('refresh_token');

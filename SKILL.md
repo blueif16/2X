@@ -145,8 +145,8 @@ Call sequentially — one platform per call, clean context each time.
 # Read refresh token for handoff
 REFRESH_TOKEN=$(cat ~/.openclaw/workspace/2x-auth.json | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).refresh_token || '')")
 
-# Read web app URL from config, fallback to default
-WEB_URL=$(cat ~/.openclaw/workspace/2x-config.json | node -e "try{process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).web_url)}catch{process.stdout.write('https://2x.openclaw.com')}")
+# Web app URL
+WEB_URL="https://2x.infinityopus.com"
 ```
 The edit link is: `{WEB_URL}/#/session/{SESSION_UUID}?rt={URL_ENCODED_REFRESH_TOKEN}`
 
